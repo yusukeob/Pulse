@@ -1,16 +1,24 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerScript : MonoBehaviour
 {
+    private int myScore = 0;
+
     private List<GameObject> hand = new List<GameObject>();
     private GameObject chosenCard;
+    private int playerNum;
+    private int numPlayers;
+    private float xStartPos = -5;
+    private float xNextPos = 2;
+    private float yPos = -3;
 
     // Start is called before the first frame update
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
@@ -21,13 +29,11 @@ public class PlayerScript : MonoBehaviour
 
     public void CreatePlayer(int[] hand, int playerNum, int numPlayers)
     {
-        GameObject playArea = GameObject.Find("InnerTable");
-        float xStartPos = -5;
-        float xNextPos = 2;
-        float yPos = -3;
+        this.playerNum = playerNum;
+        this.numPlayers = numPlayers;
 
         GameObject cardFrontPrefab;
-        //int handSize = hand.Length;
+        GameObject playArea = GameObject.Find("InnerTable");
 
         for (int i = 0; i < hand.Length; i++)
         {
@@ -47,13 +53,107 @@ public class PlayerScript : MonoBehaviour
     {
         for (int i = 0; i < hand.Count; i++)
         {
-            if (chosenCard.GetComponent<Card>().GetValue() == hand[i].GetComponent<Card>().GetValue())
+            if (chosenCard == hand[i])
             {
                 this.chosenCard = hand[i];
-                hand[i].transform.position = new Vector3(0, -1.25f, 0);
+                this.chosenCard.transform.position = new Vector3(0, -1.25f, 0);
+                hand.RemoveAt(i);
+                break;
             }
-
-            hand.RemoveAt(i);
         }
+    }
+
+    public void DestroyChosenCard()
+    {
+        Destroy(chosenCard);
+        PositionHand();
+    }
+
+    public void ReturnChosenCard()
+    {
+        hand.Add(chosenCard);
+        hand.Sort((a, b) => a.GetComponent<Card>().GetValue() - b.GetComponent<Card>().GetValue());
+
+        PositionHand();
+    }
+
+    public void PositionHand()
+    {
+        GameObject playArea = GameObject.Find("InnerTable");
+
+        for (int i = 0; i < hand.Count; i++)
+        {
+            float xCardPos = playArea.transform.position.x + xStartPos + xNextPos * i;
+            float yCardPos = playArea.transform.position.y + yPos;
+            Vector3 cardPos = new Vector3(xCardPos, yCardPos, playArea.transform.position.z);
+            hand[i].transform.position = cardPos;
+        }
+    }
+
+    public void ProcessZeroWin(GameObject winnerCard, int winScore)
+    {
+        if (winnerCard == chosenCard)
+        {
+            myScore += winScore;
+            UpdateScore();
+        }
+
+        DestroyChosenCard();
+    }
+
+    public void ProcessPosWin(GameObject winnerCard, int winScore)
+    {
+        if (winnerCard == chosenCard)
+        {
+            myScore += winScore;
+            UpdateScore();
+            DestroyChosenCard();
+        }
+        else
+        {
+            if (chosenCard.GetComponent<Card>().GetValue() > 0)
+            {
+                ReturnChosenCard();
+            }
+            else
+            {
+                DestroyChosenCard();
+            }
+        }
+    }
+
+    public void ProcessNegWin(GameObject winnerCard, int winScore)
+    {
+        if (winnerCard == chosenCard)
+        {
+            myScore += winScore;
+            UpdateScore();
+            DestroyChosenCard();
+        }
+        else
+        {
+            if (chosenCard.GetComponent<Card>().GetValue() < 0)
+            {
+                ReturnChosenCard();
+            }
+            else
+            {
+                DestroyChosenCard();
+            }
+        }
+    }
+
+    public void UpdateScore()
+    {
+        GameObject myScoreContainer = GameObject.Find("P" + playerNum + "Score");
+        Text myScoreText = myScoreContainer.GetComponent<Text>();
+
+        myScoreText.text = "P" + playerNum +" Score: " + myScore;
+    }
+
+
+    public GameObject GetChosenCard()
+    {
+        return chosenCard;
     }
 }

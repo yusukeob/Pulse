@@ -1,11 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class OpponentScript : MonoBehaviour
 {
     private int playerNum;
     private int numPlayers;
+
+    private int myScore = 0;
+
     private GameObject chosenCard;
 
     private List<GameObject> hand = new List<GameObject>();
@@ -43,7 +47,6 @@ public class OpponentScript : MonoBehaviour
         this.playerNum = playerNum;
         this.numPlayers = numPlayers;
 
-        GameObject playArea = GameObject.Find("InnerTable");
         GameObject cardBackPrefab = (GameObject)Resources.Load("Prefabs/card_back", typeof(GameObject)); ;
 
         float xStartPos = 0;
@@ -94,6 +97,8 @@ public class OpponentScript : MonoBehaviour
 
         }
 
+        GameObject playArea = GameObject.Find("InnerTable");
+
         for (int i = 0; i < hand.Length; i++)
         {
             float xCardPos = playArea.transform.position.x + xStartPos + xNextPos * i;
@@ -136,5 +141,151 @@ public class OpponentScript : MonoBehaviour
                     break;
             }
         }
+    }
+
+    public void RevealCard()
+    {
+        int chosenCardValue = chosenCard.GetComponent<Card>().GetValue();
+        Sprite frontCardSprite = Resources.Load<Sprite>("Sprites/card_front_" + chosenCardValue);
+        chosenCard.GetComponent<SpriteRenderer>().sprite = frontCardSprite;
+    }
+
+    public void DestroyChosenCard()
+    {
+        Destroy(chosenCard);
+        PositionHand();
+    }
+
+    public void ReturnChosenCard()
+    {
+        Sprite backCardSprite = Resources.Load<Sprite>("Sprites/card_back");
+        chosenCard.GetComponent<SpriteRenderer>().sprite = backCardSprite;
+
+        hand.Add(chosenCard);
+        hand.Sort((a, b) => a.GetComponent<Card>().GetValue() - b.GetComponent<Card>().GetValue());
+
+        PositionHand();
+    }
+
+    public void PositionHand()
+    {
+        float xStartPos = 0;
+        float yStartPos = 0;
+        float xNextPos = 0;
+        float yNextPos = 0;
+        if (numPlayers == 6)
+        {
+            switch (playerNum)
+            {
+                case 2:
+                    xStartPos = xPos2;
+                    yStartPos = yPos2;
+                    xNextPos = 0;
+                    yNextPos = nextPos;
+                    break;
+                case 3:
+                    xStartPos = xPos3;
+                    yStartPos = yPos3;
+                    xNextPos = nextPos;
+                    yNextPos = 0;
+                    break;
+                case 4:
+                    xStartPos = xPos4;
+                    yStartPos = yPos4;
+                    xNextPos = nextPos;
+                    yNextPos = 0;
+                    break;
+                case 5:
+                    xStartPos = xPos5;
+                    yStartPos = yPos5;
+                    xNextPos = nextPos;
+                    yNextPos = 0;
+                    break;
+                case 6:
+                    xStartPos = xPos6;
+                    yStartPos = yPos6;
+                    xNextPos = 0;
+                    yNextPos = nextPos;
+                    break;
+            }
+
+        }
+
+        GameObject playArea = GameObject.Find("InnerTable");
+
+        for (int i = 0; i < hand.Count; i++)
+        {
+            float xCardPos = playArea.transform.position.x + xStartPos + xNextPos * i;
+            float yCardPos = playArea.transform.position.y + yStartPos + yNextPos * i;
+            Vector3 cardPos = new Vector3(xCardPos, yCardPos, playArea.transform.position.z);
+            hand[i].transform.position = cardPos;
+        }
+    }
+
+    public void ProcessZeroWin(GameObject winnerCard, int winScore)
+    {
+        if (winnerCard == chosenCard)
+        {
+            myScore += winScore;
+            UpdateScore();
+        }
+
+        DestroyChosenCard();
+    }
+
+    public void ProcessPosWin(GameObject winnerCard, int winScore)
+    {
+        if (winnerCard == chosenCard)
+        {
+            myScore += winScore;
+            UpdateScore();
+            DestroyChosenCard();
+        }
+        else
+        {
+            if (chosenCard.GetComponent<Card>().GetValue() > 0)
+            {
+                ReturnChosenCard();
+            }
+            else
+            {
+                DestroyChosenCard();
+            }
+        }
+    }
+
+    public void ProcessNegWin(GameObject winnerCard, int winScore)
+    {
+        if (winnerCard == chosenCard)
+        {
+            myScore += winScore;
+            UpdateScore();
+            DestroyChosenCard();
+        }
+        else
+        {
+            if (chosenCard.GetComponent<Card>().GetValue() < 0)
+            {
+                ReturnChosenCard();
+            }
+            else
+            {
+                DestroyChosenCard();
+            }
+        }
+    }
+
+    public void UpdateScore()
+    {
+        GameObject myScoreContainer = GameObject.Find("P" + playerNum + "Score");
+        Text myScoreText = myScoreContainer.GetComponent<Text>();
+
+        myScoreText.text = "P" + playerNum + " Score: " + myScore;
+    }
+
+
+    public GameObject GetChosenCard()
+    {
+        return chosenCard;
     }
 }
