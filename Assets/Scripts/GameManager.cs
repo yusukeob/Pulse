@@ -5,12 +5,13 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    private List<GameObject> players;
+    private static List<GameObject> players;
     private int numHumans;
     private int numAI;
-    private GameObject gameTextContainer;
-    private Text gameText;
-    private GameMode gameMode;
+    public static GameObject revealCardsButton;
+    private static GameObject gameTextContainer;
+    private static Text gameText;
+    private static GameMode gameMode;
     public enum GameMode
     {
         Start = 0,
@@ -25,9 +26,11 @@ public class GameManager : MonoBehaviour
         gameMode = GameMode.Start;
         numHumans = 1;
         numAI = 5;
+        revealCardsButton = GameObject.Find("RevealCardsButton");
         gameTextContainer = GameObject.Find("GameText");
         gameText = gameTextContainer.GetComponent<Text>();
         gameTextContainer.SetActive(false);
+        GameObject.Find("RevealCardsButton").SetActive(false);
     }
 
     // Update is called once per frame
@@ -47,8 +50,28 @@ public class GameManager : MonoBehaviour
         gameMode = GameMode.ChooseCard;
     }
 
-    public GameMode GetGameMode()
+    public static void OnCardChosen(GameObject chosenCard)
     {
-        return this.gameMode;
+        foreach (GameObject player in players)
+        {
+            if (player.tag == "HumanPlayer")
+            {
+                player.GetComponent<PlayerScript>().CardChosen(chosenCard);
+            }
+            else if(player.tag == "AiPlayer")
+            {
+                player.GetComponent<OpponentScript>().ChooseCard();
+            }
+        }
+
+        gameText.text = "";
+        gameTextContainer.SetActive(false);
+        gameMode = GameMode.RevealCards;
+        revealCardsButton.SetActive(true);
+    }
+
+    public static GameMode GetGameMode()
+    {
+        return gameMode;
     }
 }

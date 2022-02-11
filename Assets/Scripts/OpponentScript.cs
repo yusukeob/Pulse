@@ -5,6 +5,8 @@ using UnityEngine;
 public class OpponentScript : MonoBehaviour
 {
     private int playerNum;
+    private int numPlayers;
+    private GameObject chosenCard;
 
     private List<GameObject> hand = new List<GameObject>();
     private readonly float nextPos = -0.5f;
@@ -39,6 +41,7 @@ public class OpponentScript : MonoBehaviour
     public void CreateAI(int[] hand, int playerNum, int numPlayers)
     {
         this.playerNum = playerNum;
+        this.numPlayers = numPlayers;
 
         GameObject playArea = GameObject.Find("InnerTable");
         GameObject cardBackPrefab = (GameObject)Resources.Load("Prefabs/card_back", typeof(GameObject)); ;
@@ -100,6 +103,38 @@ public class OpponentScript : MonoBehaviour
             GameObject card = Instantiate(cardBackPrefab, cardPos, rotation);
             card.GetComponent<Card>().SetValue(hand[i]);
             this.hand.Add(card);
+        }
+    }
+
+    public void ChooseCard()
+    {
+        // Debug.Log("AI Player");
+        int handSize = hand.Count;
+        int chooseCardIdx = Random.Range(0, handSize);
+
+        chosenCard = hand[chooseCardIdx];
+        hand.RemoveAt(chooseCardIdx);
+
+        if (numPlayers == 6)
+        {
+            switch (playerNum)
+            {
+                case 2:
+                    chosenCard.transform.position = new Vector3(xPos2 + 1.75f, yPos2 - 1.75f, 0);
+                    break;
+                case 3:
+                    chosenCard.transform.position = new Vector3(xPos3, yPos3 - 1.75f, 0);
+                    break;
+                case 4:
+                    chosenCard.transform.position = new Vector3(xPos4 - 1.25f, yPos4 - 1.75f, 0);
+                    break;
+                case 5:
+                    chosenCard.transform.position = new Vector3(xPos5 -2.5f, yPos5 - 1.75f, 0);
+                    break;
+                case 6:
+                    chosenCard.transform.position = new Vector3(xPos6 - 1.75f, yPos6 - 1.75f, 0);
+                    break;
+            }
         }
     }
 }

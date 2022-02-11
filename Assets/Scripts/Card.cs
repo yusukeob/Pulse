@@ -17,7 +17,7 @@ public class Card : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (GameManager.GetGameMode() == GameManager.GameMode.ChooseCard && Input.GetMouseButtonDown(0))
         {
             Vector3 worldMousePos = cam.ScreenToWorldPoint(Input.mousePosition);
             Vector2 origin = new Vector2(worldMousePos.x, worldMousePos.y);
@@ -25,7 +25,8 @@ public class Card : MonoBehaviour
 
             if (hit.collider != null && hit.collider.gameObject == this.gameObject)
             {
-                Debug.Log(this.value + " clicked");
+                // Debug.Log(this.value + " clicked");
+                GameManager.OnCardChosen(this.gameObject);
             }
         }
     }

@@ -47,7 +47,7 @@ public class GameComponents : MonoBehaviour
             {
                 GameObject aiPrefab = (GameObject)Resources.Load("Prefabs/Opponent", typeof(GameObject));
                 GameObject aiPlayer = Instantiate(aiPrefab, new Vector3(0, 0, 0), Quaternion.Euler(0, 0, 0));
-                aiPrefab.GetComponent<OpponentScript>().CreateAI(playerHand, i + 1, numPlayers);
+                aiPlayer.GetComponent<OpponentScript>().CreateAI(playerHand, i + 1, numPlayers);
                 players.Add(aiPlayer);
             }
         }
