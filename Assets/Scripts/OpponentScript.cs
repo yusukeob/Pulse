@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class OpponentScript : MonoBehaviour
 {
+    private int playerNum;
+
     private List<GameObject> hand = new List<GameObject>();
     private readonly float nextPos = -0.5f;
     private readonly float xPos2 = -6.75f;
@@ -36,6 +38,8 @@ public class OpponentScript : MonoBehaviour
 
     public void CreateAI(int[] hand, int playerNum, int numPlayers)
     {
+        this.playerNum = playerNum;
+
         GameObject playArea = GameObject.Find("InnerTable");
         GameObject cardBackPrefab = (GameObject)Resources.Load("Prefabs/card_back", typeof(GameObject)); ;
 
@@ -93,7 +97,9 @@ public class OpponentScript : MonoBehaviour
             float yCardPos = playArea.transform.position.y + yStartPos + yNextPos * i;
             Vector3 cardPos = new Vector3(xCardPos, yCardPos, playArea.transform.position.z);
 
-            this.hand.Add(Instantiate(cardBackPrefab, cardPos, rotation));
+            GameObject card = Instantiate(cardBackPrefab, cardPos, rotation);
+            card.GetComponent<Card>().SetValue(hand[i]);
+            this.hand.Add(card);
         }
     }
 }

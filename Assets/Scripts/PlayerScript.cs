@@ -36,7 +36,9 @@ public class PlayerScript : MonoBehaviour
             float yCardPos = playArea.transform.position.y + yPos;
             Vector3 cardPos = new Vector3(xCardPos, yCardPos, playArea.transform.position.z);
 
-            this.hand.Add(Instantiate(cardFrontPrefab, cardPos, Quaternion.Euler(0,0,0)));
+            GameObject card = Instantiate(cardFrontPrefab, cardPos, Quaternion.Euler(0, 0, 0));
+            card.GetComponent<Card>().SetValue(hand[i]);
+            this.hand.Add(card);
         }
     }
 }
