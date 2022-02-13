@@ -103,10 +103,10 @@ public class GameManager : MonoBehaviour
         switch (gameEndCondition)
         {
             case GameEndCondition.OnlyPositiveCardsLeft:
-                gameEndDisplayText += ", Only + Cards Remaining";
+                gameEndDisplayText += ", Only Positive Cards Remaining";
                 break;
             case GameEndCondition.OnlyNegativeCardsLeft:
-                gameEndDisplayText += ", Only - Cards Remaining";
+                gameEndDisplayText += ", Only Negative Cards Remaining";
                 break;
             case GameEndCondition.StaleMate:
                 gameEndDisplayText += ", Stalemate";
