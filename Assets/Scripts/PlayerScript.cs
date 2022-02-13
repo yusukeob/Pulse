@@ -9,6 +9,7 @@ public class PlayerScript : MonoBehaviour
 
     private List<GameObject> hand = new List<GameObject>();
     private GameObject chosenCard;
+
     private int playerNum;
     private int numPlayers;
     private float xStartPos = -5;
@@ -51,6 +52,11 @@ public class PlayerScript : MonoBehaviour
 
     public void CardChosen(GameObject chosenCard)
     {
+        if (chosenCard == null)
+        {
+            return;
+        }
+
         for (int i = 0; i < hand.Count; i++)
         {
             if (chosenCard == hand[i])
@@ -71,6 +77,11 @@ public class PlayerScript : MonoBehaviour
 
     public void ReturnChosenCard()
     {
+        if (chosenCard == null)
+        {
+            return;
+        }
+
         hand.Add(chosenCard);
         hand.Sort((a, b) => a.GetComponent<Card>().GetValue() - b.GetComponent<Card>().GetValue());
 
@@ -92,6 +103,11 @@ public class PlayerScript : MonoBehaviour
 
     public void ProcessZeroWin(GameObject winnerCard, int winScore)
     {
+        if (chosenCard == null)
+        {
+            return;
+        }
+
         if (winnerCard == chosenCard)
         {
             myScore += winScore;
@@ -103,6 +119,11 @@ public class PlayerScript : MonoBehaviour
 
     public void ProcessPosWin(GameObject winnerCard, int winScore)
     {
+        if (chosenCard == null)
+        {
+            return;
+        }
+
         if (winnerCard == chosenCard)
         {
             myScore += winScore;
@@ -124,6 +145,11 @@ public class PlayerScript : MonoBehaviour
 
     public void ProcessNegWin(GameObject winnerCard, int winScore)
     {
+        if (chosenCard == null)
+        {
+            return;
+        }
+
         if (winnerCard == chosenCard)
         {
             myScore += winScore;
@@ -155,5 +181,20 @@ public class PlayerScript : MonoBehaviour
     public GameObject GetChosenCard()
     {
         return chosenCard;
+    }
+
+    public List<GameObject> GetHand()
+    {
+        return hand;
+    }
+
+    public int GetPlayerScore()
+    {
+        return myScore;
+    }
+
+    public int GetPlayerNum()
+    {
+        return playerNum;
     }
 }

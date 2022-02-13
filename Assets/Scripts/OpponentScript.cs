@@ -11,8 +11,8 @@ public class OpponentScript : MonoBehaviour
     private int myScore = 0;
 
     private GameObject chosenCard;
-
     private List<GameObject> hand = new List<GameObject>();
+
     private readonly float nextPos = -0.5f;
     private readonly float xPos2 = -6.75f;
     private readonly float yPos2 = 1.3f;
@@ -113,8 +113,11 @@ public class OpponentScript : MonoBehaviour
 
     public void ChooseCard()
     {
-        // Debug.Log("AI Player");
         int handSize = hand.Count;
+        if (handSize == 0)
+        {
+            return;
+        }
         int chooseCardIdx = Random.Range(0, handSize);
 
         chosenCard = hand[chooseCardIdx];
@@ -145,6 +148,11 @@ public class OpponentScript : MonoBehaviour
 
     public void RevealCard()
     {
+        if (chosenCard == null)
+        {
+            return;
+        }
+
         int chosenCardValue = chosenCard.GetComponent<Card>().GetValue();
         Sprite frontCardSprite = Resources.Load<Sprite>("Sprites/card_front_" + chosenCardValue);
         chosenCard.GetComponent<SpriteRenderer>().sprite = frontCardSprite;
@@ -158,6 +166,11 @@ public class OpponentScript : MonoBehaviour
 
     public void ReturnChosenCard()
     {
+        if (chosenCard == null)
+        {
+            return;
+        }
+        
         Sprite backCardSprite = Resources.Load<Sprite>("Sprites/card_back");
         chosenCard.GetComponent<SpriteRenderer>().sprite = backCardSprite;
 
@@ -224,6 +237,11 @@ public class OpponentScript : MonoBehaviour
 
     public void ProcessZeroWin(GameObject winnerCard, int winScore)
     {
+        if (chosenCard == null)
+        {
+            return;
+        }
+
         if (winnerCard == chosenCard)
         {
             myScore += winScore;
@@ -235,6 +253,11 @@ public class OpponentScript : MonoBehaviour
 
     public void ProcessPosWin(GameObject winnerCard, int winScore)
     {
+        if (chosenCard == null)
+        {
+            return;
+        }
+
         if (winnerCard == chosenCard)
         {
             myScore += winScore;
@@ -256,6 +279,11 @@ public class OpponentScript : MonoBehaviour
 
     public void ProcessNegWin(GameObject winnerCard, int winScore)
     {
+        if (chosenCard == null)
+        {
+            return;
+        }
+
         if (winnerCard == chosenCard)
         {
             myScore += winScore;
@@ -287,5 +315,20 @@ public class OpponentScript : MonoBehaviour
     public GameObject GetChosenCard()
     {
         return chosenCard;
+    }
+
+    public List<GameObject> GetHand()
+    {
+        return hand;
+    }
+
+    public int GetPlayerScore()
+    {
+        return myScore;
+    }
+
+    public int GetPlayerNum()
+    {
+        return playerNum;
     }
 }

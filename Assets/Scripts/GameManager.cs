@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,6 +15,9 @@ public class GameManager : MonoBehaviour
     public static GameObject processRoundButton;
     private static GameObject gameTextContainer;
     private static Text gameText;
+    private static GameObject  gameEndTextContainer;
+    private static Text gameEndText;
+
     private static GameMode gameMode;
     public enum GameMode
     {
@@ -21,6 +25,15 @@ public class GameManager : MonoBehaviour
         ChooseCard,
         RevealCards,
         ProcessRound,
+        GameEnd,
+    }
+    private static GameEndCondition gameEndCondition;
+    public enum GameEndCondition
+    {
+         LessThanTwoPlayersLeft = 0,
+         OnlyPositiveCardsLeft,
+         OnlyNegativeCardsLeft,
+         StaleMate,
     }
 
     // Start is called before the first frame update
@@ -39,16 +52,27 @@ public class GameManager : MonoBehaviour
         gameTextContainer = GameObject.Find("GameText");
         gameText = gameTextContainer.GetComponent<Text>();
         gameTextContainer.SetActive(false);
+        gameEndTextContainer = GameObject.Find("GameEndText");
+        gameEndText = gameEndTextContainer.GetComponent<Text>();
+        gameEndTextContainer.SetActive(false);
     }
 
     // Update is called once per frame
     void Update()
     {
-
+        if (gameMode == GameMode.GameEnd)
+        {
+            ProcessGameEnd();
+        }
     }
 
     public void StartGame()
     {
+        //ResetGame
+
+        gameEndTextContainer.SetActive(false);
+        gameEndText.text = "";
+
         startButton.SetActive(false);
         players = GameObject.Find("ObjectContainer").GetComponent<GameComponents>().DealDeck(numHumans, numAI);
 
@@ -56,6 +80,84 @@ public class GameManager : MonoBehaviour
         gameTextContainer.SetActive(true);
 
         gameMode = GameMode.ChooseCard;
+    }
+
+    public void ProcessGameEnd()
+    {
+        //Display winner and game end
+        Tuple<bool, int, int> winnerPlayerNumScore =  DetermineWinnerPlayerNumScore();
+        bool isTie = winnerPlayerNumScore.Item1;
+        int winnerPlayerNum = winnerPlayerNumScore.Item2;
+        int winnerScore = winnerPlayerNumScore.Item3;
+
+
+        string gameEndDisplayText = "Game End: ";
+        if (isTie)
+        {
+            gameEndDisplayText += "Tie";
+        }
+        else
+        {
+            gameEndDisplayText += "Winner Player " + winnerPlayerNum + ", Score " + winnerScore;
+        }
+        switch (gameEndCondition)
+        {
+            case GameEndCondition.OnlyPositiveCardsLeft:
+                gameEndDisplayText += ", Only + Cards Remaining";
+                break;
+            case GameEndCondition.OnlyNegativeCardsLeft:
+                gameEndDisplayText += ", Only - Cards Remaining";
+                break;
+            case GameEndCondition.StaleMate:
+                gameEndDisplayText += ", Stalemate";
+                break;
+        }
+        gameEndText.text = gameEndDisplayText;
+        gameEndTextContainer.SetActive(true);
+        
+        gameMode = GameMode.Start;
+        startButton.GetComponentInChildren<Text>().text = "Next Game";
+        startButton.SetActive(true);
+    }
+
+    public Tuple<bool, int, int> DetermineWinnerPlayerNumScore()
+    {
+        int maxScore = 0;
+        int winnerPlayerNum = 0;
+        bool isTie = false;
+        foreach (GameObject player in players)
+        {
+            if (player.tag == "HumanPlayer")
+            {
+                int playerScore = player.GetComponent<PlayerScript>().GetPlayerScore();
+                if (playerScore > maxScore)
+                {
+                    maxScore = playerScore;
+                    winnerPlayerNum = player.GetComponent<PlayerScript>().GetPlayerNum();
+                    isTie = false;
+                }
+                else if (playerScore == maxScore)
+                {
+                    isTie = true;
+                }
+            }
+            else if (player.tag == "AiPlayer")
+            {
+                int playerScore = player.GetComponent<OpponentScript>().GetPlayerScore();
+                if (playerScore > maxScore)
+                {
+                    maxScore = playerScore;
+                    winnerPlayerNum = player.GetComponent<OpponentScript>().GetPlayerNum();
+                    isTie = false;
+                }
+                else if (playerScore == maxScore)
+                {
+                    isTie = true;
+                }
+            }
+        }
+
+        return Tuple.Create(isTie, winnerPlayerNum, maxScore);
     }
 
     public static void OnCardChosen(GameObject chosenCard)
@@ -99,6 +201,25 @@ public class GameManager : MonoBehaviour
         processRoundButton.SetActive(false);
 
         CalcRoundResults();
+        bool gameEnd = CheckForGameEnd();
+        if (gameEnd)
+        {
+            gameMode = GameMode.GameEnd;
+            return;
+        }
+
+        foreach (GameObject player in players)
+        {
+            if (player.tag == "HumanPlayer")
+            {
+                List<GameObject> playerHand = player.GetComponent<PlayerScript>().GetHand();
+                if (playerHand.Count == 0)
+                {
+                    OnCardChosen(null);
+                    return;
+                }
+            }
+        }
 
         gameMode = GameMode.ChooseCard;
         gameText.text = "Choose Card";
@@ -112,11 +233,18 @@ public class GameManager : MonoBehaviour
         {
             if (player.tag == "HumanPlayer")
             {
-                chosenCards.Add(player.GetComponent<PlayerScript>().GetChosenCard());
+                GameObject chosenCard = player.GetComponent<PlayerScript>().GetChosenCard();
+                if (chosenCard != null)
+                {
+                    chosenCards.Add(chosenCard);
+                }
             }
             else if (player.tag == "AiPlayer")
             {
-                chosenCards.Add(player.GetComponent<OpponentScript>().GetChosenCard());
+                GameObject chosenCard = player.GetComponent<OpponentScript>().GetChosenCard();
+                if (chosenCard != null) {
+                    chosenCards.Add(chosenCard);
+                }
             }
         }
 
@@ -189,6 +317,11 @@ public class GameManager : MonoBehaviour
         {
             carryOverPoints += (positiveSum += Mathf.Abs(negativeSum));
         }*/
+        int winnerCardValue = 0;
+        if (hasWinner)
+        {
+            winnerCardValue = Mathf.Abs(winnerCard.GetComponent<Card>().GetValue());
+        }
 
         foreach (GameObject player in players)
         {
@@ -205,11 +338,11 @@ public class GameManager : MonoBehaviour
                 }
                 else if (posWin)
                 {
-                    player.GetComponent<PlayerScript>().ProcessPosWin(winnerCard, Mathf.Abs(negativeSum) + carryOverPoints);
+                    player.GetComponent<PlayerScript>().ProcessPosWin(winnerCard, winnerCardValue + Mathf.Abs(negativeSum) + carryOverPoints);
                 }
                 else if (negWin)
                 {
-                    player.GetComponent<PlayerScript>().ProcessNegWin(winnerCard, positiveSum + carryOverPoints);
+                    player.GetComponent<PlayerScript>().ProcessNegWin(winnerCard, winnerCardValue + positiveSum + carryOverPoints);
                 }
             }
             else if (player.tag == "AiPlayer")
@@ -225,11 +358,11 @@ public class GameManager : MonoBehaviour
                 }
                 else if (posWin)
                 {
-                    player.GetComponent<OpponentScript>().ProcessPosWin(winnerCard, Mathf.Abs(negativeSum) + carryOverPoints);
+                    player.GetComponent<OpponentScript>().ProcessPosWin(winnerCard, winnerCardValue + Mathf.Abs(negativeSum) + carryOverPoints);
                 }
                 else if (negWin)
                 {
-                    player.GetComponent<OpponentScript>().ProcessNegWin(winnerCard, positiveSum + carryOverPoints);
+                    player.GetComponent<OpponentScript>().ProcessNegWin(winnerCard, winnerCardValue + positiveSum + carryOverPoints);
                 }
             }
         }
@@ -238,6 +371,80 @@ public class GameManager : MonoBehaviour
         {
             carryOverPoints = 0;
         }*/
+    }
+
+    public bool CheckForGameEnd()
+    {
+        bool isGameEnd = false;
+
+        List<List<GameObject>> playerHands = new List<List<GameObject>>();
+        foreach (GameObject player in players)
+        {
+            if (player.tag == "HumanPlayer")
+            {
+                playerHands.Add(player.GetComponent<PlayerScript>().GetHand());
+            }
+            else if (player.tag == "AiPlayer")
+            {
+                playerHands.Add(player.GetComponent<OpponentScript>().GetHand());
+            }
+        }
+
+        List<int> cardValuesLeft = new List<int>();
+        int playersLeft = 0;
+        foreach (List<GameObject> hand in playerHands)
+        {
+            if (hand.Count > 0)
+            {
+                playersLeft++;
+            }
+            foreach (GameObject card in hand)
+            {
+                cardValuesLeft.Add(card.GetComponent<Card>().GetValue());
+            }
+        }
+
+        if (playersLeft <= 1)
+        {
+            isGameEnd = true;
+            gameEndCondition = GameEndCondition.LessThanTwoPlayersLeft;
+            return isGameEnd;
+        }
+        bool isAllNeg = true;
+        bool isAllPos = true;
+        int sumValuesCardsLeft = 0;
+        foreach(int value in cardValuesLeft)
+        {
+            if (value > 0)
+            {
+                isAllNeg = false;
+            }
+            if (value < 0)
+            {
+                isAllPos = false;
+            }
+            sumValuesCardsLeft += value;
+        }
+        if (isAllNeg)
+        {
+            isGameEnd = true;
+            gameEndCondition = GameEndCondition.OnlyNegativeCardsLeft;
+            return isGameEnd;
+        }
+        else if (isAllPos)
+        {
+            isGameEnd = true;
+            gameEndCondition = GameEndCondition.OnlyPositiveCardsLeft;
+            return isGameEnd;
+        }
+        else if (sumValuesCardsLeft == 0 && cardValuesLeft.Count == playersLeft)
+        {
+            isGameEnd = true;
+            gameEndCondition = GameEndCondition.StaleMate;
+            return isGameEnd;
+        }
+
+        return isGameEnd;
     }
 
     public static GameMode GetGameMode()
