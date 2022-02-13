@@ -31,9 +31,10 @@ public class GameManager : MonoBehaviour
     public enum GameEndCondition
     {
          LessThanTwoPlayersLeft = 0,
+         OnlyZeroCardsLeft,
          OnlyPositiveCardsLeft,
          OnlyNegativeCardsLeft,
-         StaleMate,
+         Stalemate,
     }
 
     // Start is called before the first frame update
@@ -102,13 +103,16 @@ public class GameManager : MonoBehaviour
         }
         switch (gameEndCondition)
         {
+            case GameEndCondition.OnlyZeroCardsLeft:
+                gameEndDisplayText += ", Only Zero Cards Remain";
+                break;
             case GameEndCondition.OnlyPositiveCardsLeft:
-                gameEndDisplayText += ", Only Positive Cards Remaining";
+                gameEndDisplayText += ", Only Positive Cards Remain";
                 break;
             case GameEndCondition.OnlyNegativeCardsLeft:
-                gameEndDisplayText += ", Only Negative Cards Remaining";
+                gameEndDisplayText += ", Only Negative Cards Remain";
                 break;
-            case GameEndCondition.StaleMate:
+            case GameEndCondition.Stalemate:
                 gameEndDisplayText += ", Stalemate";
                 break;
         }
@@ -392,15 +396,27 @@ public class GameManager : MonoBehaviour
 
         List<int> cardValuesLeft = new List<int>();
         int playersLeft = 0;
+        int symmetricHandCount = 0;
+        int symmetricHandValue = 0;
+        int symmetricHandCardValue = 0;
         foreach (List<GameObject> hand in playerHands)
         {
             if (hand.Count > 0)
             {
                 playersLeft++;
             }
+            int sumPlayerHand = 0;
             foreach (GameObject card in hand)
             {
-                cardValuesLeft.Add(card.GetComponent<Card>().GetValue());
+                int cardValueLeft = card.GetComponent<Card>().GetValue();
+                sumPlayerHand += cardValueLeft;
+                symmetricHandValue += Mathf.Abs(cardValueLeft);
+                cardValuesLeft.Add(cardValueLeft);
+            }
+            if (hand.Count == 2 && sumPlayerHand == 0)
+            {
+                symmetricHandCount++;
+                symmetricHandCardValue = symmetricHandValue / 2;
             }
         }
 
@@ -410,11 +426,16 @@ public class GameManager : MonoBehaviour
             gameEndCondition = GameEndCondition.LessThanTwoPlayersLeft;
             return isGameEnd;
         }
+        bool isAllZeros = true;
         bool isAllNeg = true;
         bool isAllPos = true;
         int sumValuesCardsLeft = 0;
         foreach(int value in cardValuesLeft)
         {
+            if (value != 0)
+            {
+                isAllZeros = false;
+            }
             if (value > 0)
             {
                 isAllNeg = false;
@@ -425,7 +446,13 @@ public class GameManager : MonoBehaviour
             }
             sumValuesCardsLeft += value;
         }
-        if (isAllNeg)
+        if (isAllZeros)
+        {
+            isGameEnd = true;
+            gameEndCondition = GameEndCondition.OnlyZeroCardsLeft;
+            return isGameEnd;
+        }
+        else if (isAllNeg)
         {
             isGameEnd = true;
             gameEndCondition = GameEndCondition.OnlyNegativeCardsLeft;
@@ -437,10 +464,17 @@ public class GameManager : MonoBehaviour
             gameEndCondition = GameEndCondition.OnlyPositiveCardsLeft;
             return isGameEnd;
         }
-        else if (sumValuesCardsLeft == 0 && cardValuesLeft.Count == playersLeft)
+
+        bool symmetricStalemate = false;
+        if (symmetricHandCount == 1 && Mathf.Abs(sumValuesCardsLeft) == symmetricHandCardValue)
+        {
+            symmetricStalemate = true;
+        }
+
+        if ((sumValuesCardsLeft == 0 && cardValuesLeft.Count == playersLeft) || symmetricStalemate)
         {
             isGameEnd = true;
-            gameEndCondition = GameEndCondition.StaleMate;
+            gameEndCondition = GameEndCondition.Stalemate;
             return isGameEnd;
         }
 
