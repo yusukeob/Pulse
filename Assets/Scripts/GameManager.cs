@@ -254,8 +254,8 @@ public class GameManager : MonoBehaviour
         int positiveSum = 0;
         int maxNegativeValue = 0;
         int maxPositiveValue = 0;
-        GameObject maxNegativeCard = new GameObject();
-        GameObject maxPositiveCard = new GameObject();
+        GameObject maxNegativeCard = null;
+        GameObject maxPositiveCard = null;
         List<GameObject> zeroCards = new List<GameObject>();
         int numZeros = 0;
         foreach(GameObject chosenCard in chosenCards)
