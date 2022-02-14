@@ -32,6 +32,13 @@ public class PlayerScript : MonoBehaviour
     {
         this.playerNum = playerNum;
         this.numPlayers = numPlayers;
+        this.myScore = 0;
+        foreach(GameObject card in this.hand)
+        {
+            Destroy(card);
+        }
+        this.hand.Clear();
+        UpdateScore();
 
         GameObject cardFrontPrefab;
         GameObject playArea = GameObject.Find("InnerTable");

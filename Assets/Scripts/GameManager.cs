@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    private static List<GameObject> players;
+    private static List<GameObject> players = new List<GameObject>();
     private int numHumans;
     private int numAI;
     private int carryOverPoints = 0;
@@ -69,13 +69,11 @@ public class GameManager : MonoBehaviour
 
     public void StartGame()
     {
-        //ResetGame
-
         gameEndTextContainer.SetActive(false);
         gameEndText.text = "";
 
         startButton.SetActive(false);
-        players = GameObject.Find("ObjectContainer").GetComponent<GameComponents>().DealDeck(numHumans, numAI);
+        players = GameObject.Find("ObjectContainer").GetComponent<GameComponents>().DealDeck(numHumans, numAI, players);
 
         gameText.text = "Choose Card";
         gameTextContainer.SetActive(true);
@@ -396,27 +394,28 @@ public class GameManager : MonoBehaviour
 
         List<int> cardValuesLeft = new List<int>();
         int playersLeft = 0;
-        int symmetricHandCount = 0;
-        int symmetricHandValue = 0;
-        int symmetricHandCardValue = 0;
+        int singleCardPlayersLeft = 0;
+        List<int> multiCardPlayerCardValues = new List<int>();
+
         foreach (List<GameObject> hand in playerHands)
         {
             if (hand.Count > 0)
             {
                 playersLeft++;
             }
-            int sumPlayerHand = 0;
+            else if (hand.Count == 1)
+            {
+                singleCardPlayersLeft++;
+            }
+
             foreach (GameObject card in hand)
             {
                 int cardValueLeft = card.GetComponent<Card>().GetValue();
-                sumPlayerHand += cardValueLeft;
-                symmetricHandValue += Mathf.Abs(cardValueLeft);
                 cardValuesLeft.Add(cardValueLeft);
-            }
-            if (hand.Count == 2 && sumPlayerHand == 0)
-            {
-                symmetricHandCount++;
-                symmetricHandCardValue = symmetricHandValue / 2;
+                if (hand.Count >= 2)
+                {
+                    multiCardPlayerCardValues.Add(card.GetComponent<Card>().GetValue());
+                }
             }
         }
 
@@ -436,11 +435,11 @@ public class GameManager : MonoBehaviour
             {
                 isAllZeros = false;
             }
-            if (value > 0)
+            if (value >= 0)
             {
                 isAllNeg = false;
             }
-            if (value < 0)
+            if (value <= 0)
             {
                 isAllPos = false;
             }
@@ -465,13 +464,45 @@ public class GameManager : MonoBehaviour
             return isGameEnd;
         }
 
-        bool symmetricStalemate = false;
-        if (symmetricHandCount == 1 && Mathf.Abs(sumValuesCardsLeft) == symmetricHandCardValue)
+        bool multiCardStalemate = false;
+        if (playersLeft - singleCardPlayersLeft == 1)
         {
-            symmetricStalemate = true;
+            int sumPosMultiCardPlayer = 0;
+            int posCardCount = 0;
+            int sumNegMultiCardPlayer = 0;
+            int negCardCount = 0;
+            foreach (int cardValue in multiCardPlayerCardValues)
+            {
+                if (cardValue > 0)
+                {
+                    posCardCount++;
+                    sumPosMultiCardPlayer += cardValue;
+                }
+                else if (cardValue < 0)
+                {
+                    negCardCount++;
+                    sumNegMultiCardPlayer += cardValue;
+                }
+            }
+
+            int sumCardValuesWithoutMultiCardPlayerCards = sumValuesCardsLeft - sumPosMultiCardPlayer - sumNegMultiCardPlayer;
+            if (sumCardValuesWithoutMultiCardPlayerCards < 0)
+            {
+                if (posCardCount == 1 && sumCardValuesWithoutMultiCardPlayerCards + sumPosMultiCardPlayer == 0)
+                {
+                    multiCardStalemate = true;
+                }
+            }
+            else if (sumCardValuesWithoutMultiCardPlayerCards > 0)
+            {
+                if (negCardCount == 1 && sumCardValuesWithoutMultiCardPlayerCards + sumNegMultiCardPlayer == 0)
+                {
+                    multiCardStalemate = true;
+                }
+            }
         }
 
-        if ((sumValuesCardsLeft == 0 && cardValuesLeft.Count == playersLeft) || symmetricStalemate)
+        if ((sumValuesCardsLeft == 0 && cardValuesLeft.Count == playersLeft) || multiCardStalemate)
         {
             isGameEnd = true;
             gameEndCondition = GameEndCondition.Stalemate;

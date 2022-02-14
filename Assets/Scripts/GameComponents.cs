@@ -24,8 +24,9 @@ public class GameComponents : MonoBehaviour
         
     }
 
-    public List<GameObject> DealDeck(int numHumans, int numAI)
+    public List<GameObject> DealDeck(int numHumans, int numAI, List<GameObject> createdPlayers)
     {
+        bool playersCreated = createdPlayers.Count > 0;
         List<GameObject> players = new List<GameObject>();
 
         int[] dealDeck = ShuffleDeck();
@@ -36,20 +37,37 @@ public class GameComponents : MonoBehaviour
         for (int i = 0; i < (numHumans + numAI); i++)
         {
             int[] playerHand = dealDeck.Skip(i * handSize).Take(handSize).OrderBy(i => i).ToArray();
-            if (i < numHumans)
+            if (!playersCreated) 
             {
-                GameObject humanPrefab = (GameObject)Resources.Load("Prefabs/Player", typeof(GameObject));
-                GameObject humanPlayer = Instantiate(humanPrefab, new Vector3(0, 0, 0), Quaternion.Euler(0, 0, 0));
-                humanPlayer.GetComponent<PlayerScript>().CreatePlayer(playerHand, i + 1, numPlayers);
-                players.Add(humanPlayer);
+                if (i < numHumans)
+                {
+                    GameObject humanPrefab = (GameObject)Resources.Load("Prefabs/Player", typeof(GameObject));
+                    GameObject humanPlayer = Instantiate(humanPrefab, new Vector3(0, 0, 0), Quaternion.Euler(0, 0, 0));
+                    humanPlayer.GetComponent<PlayerScript>().CreatePlayer(playerHand, i + 1, numPlayers);
+                    players.Add(humanPlayer);
+                }
+                else
+                {
+                    GameObject aiPrefab = (GameObject)Resources.Load("Prefabs/Opponent", typeof(GameObject));
+                    GameObject aiPlayer = Instantiate(aiPrefab, new Vector3(0, 0, 0), Quaternion.Euler(0, 0, 0));
+                    aiPlayer.GetComponent<OpponentScript>().CreateAI(playerHand, i + 1, numPlayers);
+                    players.Add(aiPlayer);
+                }
             }
             else
             {
-                GameObject aiPrefab = (GameObject)Resources.Load("Prefabs/Opponent", typeof(GameObject));
-                GameObject aiPlayer = Instantiate(aiPrefab, new Vector3(0, 0, 0), Quaternion.Euler(0, 0, 0));
-                aiPlayer.GetComponent<OpponentScript>().CreateAI(playerHand, i + 1, numPlayers);
-                players.Add(aiPlayer);
+                if (createdPlayers[i].tag == "HumanPlayer")
+                {
+                    createdPlayers[i].GetComponent<PlayerScript>().CreatePlayer(playerHand, i + 1, numPlayers);
+                    players.Add(createdPlayers[i]);
+                }
+                else if(createdPlayers[i].tag == "AiPlayer")
+                {
+                    createdPlayers[i].GetComponent<OpponentScript>().CreateAI(playerHand, i + 1, numPlayers);
+                    players.Add(createdPlayers[i]);
+                }
             }
+
         }
 
         return players;

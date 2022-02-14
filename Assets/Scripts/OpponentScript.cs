@@ -46,6 +46,13 @@ public class OpponentScript : MonoBehaviour
     {
         this.playerNum = playerNum;
         this.numPlayers = numPlayers;
+        this.myScore = 0;
+        foreach(GameObject card in this.hand)
+        {
+            Destroy(card);
+        }
+        this.hand.Clear();
+        UpdateScore();
 
         GameObject cardBackPrefab = (GameObject)Resources.Load("Prefabs/card_back", typeof(GameObject)); ;
 
